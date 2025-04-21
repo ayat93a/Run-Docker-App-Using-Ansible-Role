@@ -1,0 +1,51 @@
+  - name: Make sure that the required packages is installed
+    apt:
+      force_apt_get: yes
+      name:
+        - ca-certificates
+        - curl
+      state: present
+  - name: Make syre tgat the directory required for the installation is created
+    file:
+      path: /etc/apt/keyrings
+      state: directory
+      mode : '0755'
+  - name: make sute that official Docker's GPG public key is installed.
+    get_url:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      dest: /etc/apt/keyrings/docker.asc
+      mode: '0644'
+  - name: Make sure that docker repository is added to the apt repositories
+    apt_repository:
+      repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+      state: present
+      filename: docker
+    no_log: true
+  - name: Make sure that apt is updated
+    apt:
+      update_cache: yes
+      force_apt_get: yes
+  - name: Ensure that docker packages are installed
+    apt:
+      force_apt_get: yes
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+      state: present
+    register: result
+    notify:
+      - Run docker as a service
+      - Add current user to docker group
+      - Reset the connection
+      - Wait for the connection to be established
+  - name: Show output from the apt task
+    debug:
+      msg: "{{ result.changed }}"
+  - name: Enusre that a group called docker is created if it not exist
+    group:
+      name: docker
+      state: present
+

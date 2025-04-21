@@ -1,0 +1,16 @@
+  - name: Run docker as a service
+    service:
+      state: started
+      name: docker
+      enabled: true
+  - name: Add current user to docker group 
+    user:
+      name: "{{ansible_user}}"
+      shell: /bin/bash
+      groups: docker
+      append: yes
+  - name: Reset the connection
+    meta: reset_connection
+  - name: Wait for the connection to be established
+    wait_for_connection:
+      timeout: 30
